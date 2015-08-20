@@ -11,7 +11,11 @@ LAPD_set <-
 
 loc = LAPD_set$Location.1
 loc = strsplit(LAPD_set$Location.1,c(','))
-latlong = data.frame(matrix(unlist(loc),ncol=2))
+lat_n = seq(1,length(unlist(loc)),2)
+long_n = seq(2,length(unlist(loc)),2)
+lats = unlist(loc)[lat_n]
+longs = unlist(loc)[long_n]
+latlong = data.frame(lats,longs)
 latlong_n = sapply(head(latlong),function(x) {
   x = gsub("[\\)]|[\\(]","",x,perl=T)
   x = str_trim(x)
