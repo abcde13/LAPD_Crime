@@ -12,7 +12,7 @@ LAPD_set <-
 na_locs = is.na(LAPD_set$Location.1)
 LAPD_set = LAPD_set[!na_locs,]
 traffic = LAPD_set$Crm.Cd.Desc == "TRAFFIC DR #"
-LAPD_Set = LAPD_set[!traffic,]
+LAPD_set = LAPD_set[!traffic,]
 loc = LAPD_set$Location.1
 loc = strsplit(LAPD_set$Location.1,c(','))
 lat_n = seq(1,length(unlist(loc)),2)
@@ -27,6 +27,16 @@ latlong = sapply(latlong,function(x) {
 lats = as.numeric(latlong[,1])
 longs = as.numeric(latlong[,2])
 LAPD_set = mutate(LAPD_set,"Lat" = lats,"Long" = longs)
+LAPD_set$TIME.OCC = sapply(LAPD_set$TIME.OCC,function(x) {
+  x = as.character(x)
+  if(nchar(x) != 4)
+    x = paste0("0",x)
+  x
+})
+LAPD_set = mutate(LAPD_set,Date_Occurred = paste0(DATE.OCC,TIME.OCC))
+LAPD_set$Date_Occurred = strptime(LAPD_set$Date_Occurred,"%m/%d/%Y%H%M")
+date_na = is.na(LAPD_set$Date_Occurred)
+LAPD_set = LAPD_set[!date_na,]
 
 geocode("Los Angeles")
 la_latlong = c(lon = -118.2437,lat = 34.05223)
@@ -40,3 +50,4 @@ ggmap(la_map,extent="normal",maprange = F) %+% LAPD_set +
   coord_map(projection="mercator",
             xlim=c(attr(la_map, "bb")$ll.lon, attr(la_map, "bb")$ur.lon),
             ylim=c(attr(la_map, "bb")$ll.lat, attr(la_map, "bb")$ur.lat))
+
