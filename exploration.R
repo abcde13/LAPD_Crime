@@ -6,7 +6,7 @@ library(ggmap)
 library(shiny)
 
 LAPD_set <- 
-  read.csv("~/Downloads/LAPD_Crime_and_Collision_Raw_Data_-_2014.csv",
+  read.csv("LAPD_Crime_and_Collision_Raw_Data_-_2014.csv",
            na.strings="",
            stringsAsFactors=FALSE)
 na_locs = is.na(LAPD_set$Location.1)
@@ -34,19 +34,24 @@ LAPD_set$TIME.OCC = sapply(LAPD_set$TIME.OCC,function(x) {
   x
 })
 LAPD_set = mutate(LAPD_set,Date_Occurred = paste0(DATE.OCC,TIME.OCC))
+LAPD_set$DATE.OCC = strptime(as.character(LAPD_set$DATE.OCC),"%m/%d/%Y")
+not_2014 = LAPD_set$DATE.OCC < "2014-01-01"
+LAPD_set = LAPD_set[!not_2014,]
 LAPD_set$Date_Occurred = strptime(LAPD_set$Date_Occurred,"%m/%d/%Y%H%M")
 date_na = is.na(LAPD_set$Date_Occurred)
 LAPD_set = LAPD_set[!date_na,]
+LAPD_set$Months = months(LAPD_set$DATE.OCC)
+LAPD_set$Crm.Cd.Desc = factor(LAPD_set$Crm.Cd.Desc)
 
 geocode("Los Angeles")
 la_latlong = c(lon = -118.2437,lat = 34.05223)
 la_map = get_map(la_latlong,zoom=10,maptype="terrain")
+
 ggmap(la_map,extent="normal",maprange = F) %+% LAPD_set +
   aes(x=Long,y=Lat) +
-  geom_density2d() +
-  stat_density2d(aes(fill = ..level.., alpha = ..level..),size=10,
-                 bins=16,geom="polygon") + 
-  scale_alpha(range=c(0.1,0.6)) +
+  stat_density2d(aes(fill = ..level.., alpha = ..level..),size=1,
+                 bins=8,geom="polygon") + 
+  scale_alpha(range=c(0.1,0.6),guide=F) +
   coord_map(projection="mercator",
             xlim=c(attr(la_map, "bb")$ll.lon, attr(la_map, "bb")$ur.lon),
             ylim=c(attr(la_map, "bb")$ll.lat, attr(la_map, "bb")$ur.lat))
